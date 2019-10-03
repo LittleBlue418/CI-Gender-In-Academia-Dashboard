@@ -7,6 +7,7 @@ function makeGraphs(error, salaryData) {
 
   salaryData.forEach(function (d) {
     d.salary = parseInt(d.salary);
+    d.yrs_since_phd = parseInt(d["yrs.since.phd"]);
     d.yrs_service = parseInt(d["yrs.service"]);
   })
 
@@ -20,6 +21,7 @@ function makeGraphs(error, salaryData) {
   show_rank_distribution(ndx);
 
   show_service_to_salary_correlation(ndx);
+  show_phd_to_salary_correlation(ndx);
 
   dc.renderAll();
 }
@@ -35,39 +37,39 @@ function show_discipline_selector(ndx) {
 
 function show_percent_that_are_professors(ndx, gender, element) {
   var percentageThatAreProf = ndx.groupAll().reduce(
-      function(p, v) {
-          if (v.sex === gender) {
-              p.count++;
-              if(v.rank === "Prof") {
-                  p.are_prof++;
-              }
-          }
-          return p;
-      },
-      function(p, v) {
-          if (v.sex === gender) {
-              p.count--;
-              if(v.rank === "Prof") {
-                  p.are_prof--;
-              }
-          }
-          return p;
-      },
-      function() {
-          return {count: 0, are_prof: 0};
-      },
+    function (p, v) {
+      if (v.sex === gender) {
+        p.count++;
+        if (v.rank === "Prof") {
+          p.are_prof++;
+        }
+      }
+      return p;
+    },
+    function (p, v) {
+      if (v.sex === gender) {
+        p.count--;
+        if (v.rank === "Prof") {
+          p.are_prof--;
+        }
+      }
+      return p;
+    },
+    function () {
+      return { count: 0, are_prof: 0 };
+    },
   );
 
   dc.numberDisplay(element)
-      .formatNumber(d3.format(".2%"))
-      .valueAccessor(function (d) {
-        if (d.count == 0) {
-          return 0;
-        } else {
-          return (d.are_prof / d.count);
-        }
-      })
-      .group(percentageThatAreProf)
+    .formatNumber(d3.format(".2%"))
+    .valueAccessor(function (d) {
+      if (d.count == 0) {
+        return 0;
+      } else {
+        return (d.are_prof / d.count);
+      }
+    })
+    .group(percentageThatAreProf)
 }
 
 function show_gender_balance(ndx) {
@@ -190,7 +192,7 @@ function show_service_to_salary_correlation(ndx) {
 
   var yearsOfServiceDim = ndx.dimension(dc.pluck("yrs_service"));
 
-  var serviceAndSalaryDim =ndx.dimension(function(d) {
+  var serviceAndSalaryDim = ndx.dimension(function (d) {
     return [d.yrs_service, d.salary, d.rank, d.sex]
   })
   var experienceSalaryGroup = serviceAndSalaryDim.group();
@@ -207,7 +209,7 @@ function show_service_to_salary_correlation(ndx) {
     .clipPadding(10)
     .xAxisLabel("Years Of Service")
     .yAxisLabel("Salary")
-    .title(function(d) {
+    .title(function (d) {
       return d.key[2] + " earned " + d.key[1];
     })
     .colorAccessor(function (d) {
@@ -216,5 +218,43 @@ function show_service_to_salary_correlation(ndx) {
     .colors(genderColors)
     .dimension(serviceAndSalaryDim)
     .group(experienceSalaryGroup)
-    .margins({top: 10, right: 50, bottom: 75, left: 75});
+    .margins({ top: 10, right: 50, bottom: 75, left: 75 });
 }
+
+function show_phd_to_salary_correlation(ndx) {
+
+  var genderColors = d3.scale.ordinal()
+    .domain(["Female", "Male"])
+    .range(["pink", "blue"]);
+
+  var yearsSincePHDDim = ndx.dimension(dc.pluck("yrs_since_phd"));
+
+  var phdDim = ndx.dimension(function (d) {
+    return [d.yrs_since_phd, d.salary, d.rank, d.sex]
+  })
+  var phdSalaryGroup = phdDim.group();
+
+  var minPhd = yearsSincePHDDim.bottom(1)[0].yrs_since_phd;
+  var maxPhd = yearsSincePHDDim.top(1)[0].yrs_since_phd;
+
+  dc.scatterPlot("#phd-salary")
+    .width(800)
+    .height(400)
+    .x(d3.scale.linear().domain([minPhd, maxPhd]))
+    .brushOn(false)
+    .symbolSize(8)
+    .clipPadding(10)
+    .xAxisLabel("Years Since Phd")
+    .yAxisLabel("Salary")
+    .title(function (d) {
+      return d.key[2] + " earned " + d.key[1];
+    })
+    .colorAccessor(function (d) {
+      return d.key[3];
+    })
+    .colors(genderColors)
+    .dimension(phdDim)
+    .group(phdSalaryGroup)
+    .margins({ top: 10, right: 50, bottom: 75, left: 75 });
+}
+

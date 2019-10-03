@@ -31,29 +31,28 @@ function show_discipline_selector(ndx) {
 
 function show_percent_that_are_professors(ndx, gender, element) {
   var percentageThatAreProf = ndx.groupAll().reduce(
-    function (p, v) {
-      if (v.sex === gender) {
-        p.count++;
-        if (v.rank === "Prof") {
-          p.are_prof++;
-        }
-        return p;
+      function(p, v) {
+          if (v.sex === gender) {
+              p.count++;
+              if(v.rank === "Prof") {
+                  p.are_prof++;
+              }
+          }
+          return p;
       },
       function(p, v) {
-        if (v.sex === gender) {
-          p.count--;
-          if (v.rank === "Prof") {
-            p.are_prof--;
+          if (v.sex === gender) {
+              p.count--;
+              if(v.rank === "Prof") {
+                  p.are_prof--;
+              }
           }
-        }
-        return p;
+          return p;
       },
       function() {
-        return { count: 0, are_prof: 0 };
+          return {count: 0, are_prof: 0};
       },
-    }
   );
-}
 
 function show_gender_balance(ndx) {
   var dim = ndx.dimension(dc.pluck('sex'));
